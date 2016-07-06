@@ -19,6 +19,8 @@ class KalmanFilter:
         self.Pminus = self.P + self.Q
 
     def measurement_update(self, measured_value):
+        time_update()
+
         self.z = measured_value
 
         self.K = self.Pminus / ( self.Pminus + self.R )
