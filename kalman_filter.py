@@ -21,9 +21,12 @@ class KalmanFilter:
     def measurement_update(self, measured_value):
         self.z = measured_value
 
-        K = Pminus / ( Pminus + R )
-        xhat = xhatminus + K * ( z - xhatminus )
-        P = ( 1 - K ) * Pminus
+        self.K = self.Pminus / ( self.Pminus + self.R )
+        self.xhat = self.xhatminus + self.K * ( self.z - self.xhatminus )
+        self.P = ( 1 - self.K ) * self.Pminus
+
+    def estimation(self):
+        return self.xhat
 
     def print_result(self):
         print 'measured value: %6.2f' % self.z, "| current estimation: %6.2f" % self.xhat
