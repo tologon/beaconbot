@@ -1,34 +1,29 @@
 # Kalman filter for RSSI readings
+class KalmanFilter:
 
-import random as rng
-import time
+    def __init__(self):
+        # process variance for VOLTAGE; might be different for RSSI
+        self.Q = 1e-5
+        # estimate of measurement variance, change to see effect
+        self.R = 0.1**2
+        # initial guesses
+        # current estimation
+        self.xhat = 0.0
+        # prior error covariance
+        self.P = 1.0
+        # range for the possible RSSI values (in Db)
+        # self.lowest, self.highest = -30.0, 0.0
 
-# process variance for VOLTAGE; might be different for RSSI
-Q = 1e-5
-# estimate of measurement variance, change to see effect
-R = 0.1**2
+    def time_update(self):
+        self.xhatminus = self.xhat
+        self.Pminus = self.P + self.Q
 
-# initial guesses
-# current estimation
-xhat = 0.0
-# prior error covariance
-P = 1.0
+    def measurement_update(self, measured_value):
+        self.z = measured_value
 
-# range for the possible RSSI values (in Db)
-lowest, highest = -30.0, 0.0
+        K = Pminus / ( Pminus + R )
+        xhat = xhatminus + K * ( z - xhatminus )
+        P = ( 1 - K ) * Pminus
 
-while True:
-  # time update
-  xhatminus = xhat
-  Pminus = P + Q
-
-  # measurement update
-  K = Pminus / ( Pminus + R )
-  z = rng.uniform(lowest, highest)
-  xhat = xhatminus + K * ( z - xhatminus )
-  P = ( 1 - K ) * Pminus
-
-  print 'measured value: %6.2f' % z, "| current estimation: %6.2f" % xhat
-
-  # time interval in seconds
-  time.sleep(0.1)
+    def print_result(self):
+        print 'measured value: %6.2f' % self.z, "| current estimation: %6.2f" % self.xhat
