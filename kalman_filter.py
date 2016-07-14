@@ -13,6 +13,7 @@ class KalmanFilter:
         self.P = 1.0
         # range for the possible RSSI values (in Db)
         # self.lowest, self.highest = -30.0, 0.0
+        self.z = 0
 
     def time_update(self):
         self.xhatminus = self.xhat
