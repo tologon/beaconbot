@@ -18,8 +18,8 @@ class TWDDController(object):
 	# assumes orientation along x axis
 
 	# Ignore one wheel if the percent difference is low
-	if abs(2.0*(vl-vr)/(vl+vr)) < 0.01:
-	    return (t*vl, 0)
+	if vl+vr < 0.01 or abs(2.0*(vl-vr)/(vl+vr)) < 0.01:
+	    return ( (t*vl, 0), 0)
 
 	theta = t/self.b*(vr-vl)
 	radius = self.b/2.0*((vl+vr)/(vr-vl))

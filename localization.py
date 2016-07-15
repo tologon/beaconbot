@@ -4,7 +4,7 @@ from numpy import asarray
 from time import time
 
 class Localizer(object):
-    def __init__(self, samples=20):
+    def __init__(self, samples=12):
         self.samples = samples
         self.state = []
 
@@ -41,7 +41,13 @@ class Localizer(object):
 
             dist_error = distance.euclidean(test_point, sample_point)
 	    # TODO: Fix div by zero here
-            denominator = -1.0*(dist-dist_error)/(dist_error*abs(dist-dist_error))
+            if dist_error*abs(dist - dist_error) < 0.0001:
+                denominator = -1
+            else:
+                denominator = -1.0*(dist-dist_error)/(dist_error*abs(dist-dist_error))
+                #print "denom: ", denominator
+            #print "sample_point: ", sample_point
+            #print "test_point: ", test_point
             x_gradient += (test_point[0] - sample_point[0])*denominator
             y_gradient += (test_point[1] - sample_point[1])*denominator
 
@@ -54,7 +60,7 @@ class Localizer(object):
 			method='SLSQP',
 			jac=self._error_gradient,
                         x0=(0,0),
-                        options={'eps':1.4901e-09,'maxiter':12}
+                        options={'eps':1.4901e-09,'maxiter':13}
                        ).x
 	
 
@@ -62,7 +68,7 @@ if __name__ == '__main__':
     # Run some tests
     import random as rng
 
-    simulation_length = 1000
+    simulation_length = 100
     max_samples = 12
 
     min_range = -500.0
