@@ -1,6 +1,5 @@
 # Kalman filter for RSSI readings
 class KalmanFilter:
-
     def __init__(self):
         # process variance for VOLTAGE; might be different for RSSI
         self.Q = 1e-5
