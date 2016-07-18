@@ -24,10 +24,9 @@ motor_hat = Adafruit_MotorHAT(addr=0x60)
 
 # recommended for auto-disabling motors on shutdown!
 def turnOffMotors():
-        motor_hat.getMotor(1).run(Adafruit_MotorHAT.RELEASE)
-        motor_hat.getMotor(2).run(Adafruit_MotorHAT.RELEASE)
-        motor_hat.getMotor(3).run(Adafruit_MotorHAT.RELEASE)
-        motor_hat.getMotor(4).run(Adafruit_MotorHAT.RELEASE)
+    # disable 4 motors
+    for motor in range(1, 5):
+        motor_hat.getMotor(motor).run(Adafruit_MotorHAT.RELEASE)
 
 atexit.register(turnOffMotors)
 
@@ -38,11 +37,11 @@ left_motor  = motor_hat.getMotor(2)
 class Motors(object):
     def __init__(self, right_motor, left_motor):
         self.right_motor = right_motor 
-        self.left_motor = left_motor
+        self.left_motor  = left_motor
         self.right_state = Adafruit_MotorHAT.RELEASE
         self.right_speed = 0
-        self.left_state = Adafruit_MotorHAT.RELEASE
-        self.left_speed = 0
+        self.left_state  = Adafruit_MotorHAT.RELEASE
+        self.left_speed  = 0
 
     def run(self, motor, command):
         if motor == 'LEFT':
@@ -69,17 +68,17 @@ class Motors(object):
        
 # Object that handles bluetooth packets
 class KalmanDelegate(DefaultDelegate):
-  def __init__(self, filter):
-    DefaultDelegate.__init__(self)
-    self.filter = filter
+    def __init__(self, filter):
+        DefaultDelegate.__init__(self)
+        self.filter = filter
 
-  def handleDiscovery(self, dev, isNewDev, isNewData):
-    # If we see the bluetooth beacon's address
-    # Update the kalman filter with the rssi
-    if dev.addr == '0c:f3:ee:04:22:3d':
-      rssi = float(dev.rssi)
-      self.filter.measurement_update(rssi)
-      #self.filter.print_result()
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        # If we see the bluetooth beacon's address
+        # Update the kalman filter with the rssi
+        if dev.addr == '0c:f3:ee:04:22:3d':
+            rssi = float(dev.rssi)
+            self.filter.measurement_update(rssi)
+            #self.filter.print_result()
 
        
 motors = Motors(right_motor, left_motor)
@@ -122,6 +121,6 @@ while True:
     new_position = add(new_position[0], last_position)
     last_position = new_position
     if (vl + vr) / 2 > 0.01:
-      localizer.update( (new_position, current_distance) )
-      print "new position: ", new_position
-      print "target location: ", localizer.target_location()
+        localizer.update( (new_position, current_distance) )
+        print "new position: ", new_position
+        print "target location: ", localizer.target_location()
