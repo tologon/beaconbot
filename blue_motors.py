@@ -100,6 +100,7 @@ for x in range(10):
 
 last_position = (0,0)
 
+# TODO: organize into sensible and correct loop
 while True:
     start_time = time.time()
 
