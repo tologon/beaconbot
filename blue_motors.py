@@ -103,27 +103,28 @@ last_position = (0,0)
 while True:
     start_time = time.time()
 
-    # Calculate encoder velocities
-    ldist1 = left_encoder.getTotalDistance()
-    rdist1 = right_encoder.getTotalDistance()
+    # calculate encoder velocities
+    prev_left_distance  = left_encoder.getTotalDistance()
+    prev_right_distance = right_encoder.getTotalDistance()
 
     scanner.scan(0.1)
     rssi = filter.estimation()
-    current_distance = e**((rssi + 72) / (-2.0*10))
+    # magic calculation
+    current_distance = e**( (rssi + 72) / (-2.0 * 10) )
 
-    ldist2 = left_encoder.getTotalDistance()
-    rdist2 = right_encoder.getTotalDistance()
+    next_left_distance  = left_encoder.getTotalDistance()
+    next_right_distance = right_encoder.getTotalDistance()
 
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    vl = (ldist2-ldist1) / (1.0 / elapsed_time)
-    vr = (rdist2-rdist1) / (1.0 / elapsed_time)
+    left_velocity  = (next_left_distance - prev_left_distance) / (1.0 / elapsed_time)
+    right_velocity = (next_right_distance - prev_right_distance) / (1.0 / elapsed_time)
 
-    new_position = twdd_controller.dead_reckon(vl, vr, (elapsed_time) * 1000.0)
+    new_position = twdd_controller.dead_reckon(left_velocity, right_velocity, (elapsed_time) * 1000.0)
     new_position = add(new_position[0], last_position)
     last_position = new_position
-    if (vl + vr) / 2 > 0.01:
+    if (left_velocity + right_velocity) / 2 > 0.01:
         localizer.update( (new_position, current_distance) )
         print "new position: ", new_position
         print "target location: ", localizer.target_location()
