@@ -67,6 +67,12 @@ class Motors(object):
             return self.left_state
         elif motor == RIGHT:
             return self.right_state
+            
+    def get_speed(self, motor):
+        if motor == LEFT:
+            return self.left_speed
+        elif motor == RIGHT:
+            return self.right_speed    	
 
        
 # Object that handles bluetooth packets
