@@ -34,35 +34,38 @@ atexit.register(turnOffMotors)
 right_motor = motor_hat.getMotor(1)
 left_motor  = motor_hat.getMotor(2)
 
+LEFT  = 'LEFT'
+RIGHT = 'RIGHT'
+
 class Motors(object):
     def __init__(self, right_motor, left_motor):
         self.right_motor = right_motor 
         self.left_motor  = left_motor
         self.right_state = Adafruit_MotorHAT.RELEASE
-        self.right_speed = 0
         self.left_state  = Adafruit_MotorHAT.RELEASE
+        self.right_speed = 0
         self.left_speed  = 0
 
     def run(self, motor, command):
-        if motor == 'LEFT':
+        if motor == LEFT:
             self.left_motor.run(command)
             self.left_state = command
-        elif motor == 'RIGHT':
+        elif motor == RIGHT:
             self.right_motor.run(command)
             self.right_state = command
 
     def set_speed(self, motor, speed):
-        if motor == 'LEFT':
+        if motor == LEFT:
             self.left_motor.setSpeed(speed)
             self.left_speed = speed
-        elif motor == 'RIGHT':
+        elif motor == RIGHT:
             self.right_motor.setSpeed(speed)
             self.right_speed = speed
 
     def get_state(self, motor):
-        if motor == 'LEFT':
+        if motor == LEFT:
             return self.left_state
-        elif motor == 'RIGHT':
+        elif motor == RIGHT:
             return self.right_state
 
        
