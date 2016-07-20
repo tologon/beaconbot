@@ -10,7 +10,7 @@ class TWDDController(object):
         return 0.5 * (left_velocity + right_velocity)
 
     def ang_velocity(self, left_velocity, right_velocity):
-        return 1.0 / self.b * (right_velocity - left_velocity)
+        return 1.0 / self.wheel_distance * (right_velocity - left_velocity)
 
     def dead_reckon(self, left_velocity, right_velocity, time):
         """Returns the (x, y) of the platform given the wheel velocities
