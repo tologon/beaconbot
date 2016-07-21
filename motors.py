@@ -12,7 +12,7 @@ class Motors(object):
     def __init__(self, right_motor, right_encoder, left_motor, left_encoder, delay=0.01):
         self.right_motor = right_motor
         self.right_encoder = right_encoder
-        
+
         self.left_motor  = left_motor
         self.left_encoder  = left_encoder
 
@@ -83,7 +83,7 @@ class Motors(object):
             lvel = (ldist-ldist_prev)/(current_time-last_time)*sign(self.left_speed)
             print "Current velocities (l/r): (%f, %f)" % (lvel, rvel)
 
-	    right_PID.update(rvel)
+            right_PID.update(rvel)
             left_PID.update(lvel)
 
             right_motor_output = right_PID.output
