@@ -10,7 +10,7 @@ RIGHT = 'RIGHT'
 
 
 class Platform(object):
-    def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.02):
+    def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.05):
         self.motor_hat = Adafruit_MotorHAT(addr=0x60)
 
         # DO NOT CHANGE THOSE VALUES
@@ -103,9 +103,9 @@ class Platform(object):
         self.shutdown()
 
     def turn(self, theta):
-        CUSTOM_TIME_DELAY   = 0.02
-        LEFT_TICK_RATIO     = 18.0/87.0
-        RIGHT_TICK_RATIO    = 17.0/87.0
+        CUSTOM_TIME_DELAY   = 0.01
+        LEFT_TICK_RATIO     = 17.0/87.0
+        RIGHT_TICK_RATIO    = 18.0/87.0
 
         left_tick_goal      = int(LEFT_TICK_RATIO * theta)
         right_tick_goal     = int(RIGHT_TICK_RATIO * theta)
@@ -121,7 +121,7 @@ class Platform(object):
         self._set_power_directional(LEFT, int(left_power))
         self._set_power_directional(RIGHT, int(right_power))
 
-        while left_ticks_to_goal > 0 and right_ticks_to_goal > 0:
+        while left_ticks_to_goal > 0 or right_ticks_to_goal > 0:
             left_ticks = self.left_encoder.getTicks()
             left_ticks_to_goal = left_tick_goal - left_ticks
 
@@ -140,8 +140,8 @@ class Platform(object):
             sleep(CUSTOM_TIME_DELAY)
 
         
-        print "left tick goal: %6.2f, right tick goal: %6.2f" % (left_tick_goal, right_tick_goal)
-        print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+        print "left tick   goal:  %3d, right tick   goal:  %3d" % (left_tick_goal, right_tick_goal)
+        print "left actual ticks: %3d, right actual ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
 
         '''
@@ -180,5 +180,7 @@ if __name__ == '__main__':
 
     #print "platform state BEFORE:\t", platform.get_state()
     platform.turn(90)
+    #platform.turn(180)
+    #platform.turn(360)
     sleep(0.5)
     #print "platform state AFTER:\t", platform.get_state()
