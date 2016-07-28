@@ -1,6 +1,7 @@
 from numpy import cos, sin, deg2rad
+import math
+from math import pi as PI
 
-PI = 3.1415
 # A simple two-wheel differential drive controller
 class PositionTracker(object):
     def __init__(self, wheel_distance):
@@ -39,5 +40,5 @@ class PositionTracker(object):
             print "Updated PositionTracker: at x=%f, y=%f, theta=%f" % (self.x, self.y, self.theta * 180.0/3.1415)
 
     def getState(self):
-        return (self.x, self.y, self.theta)
+        return (self.x, self.y, math.degrees(self.theta))
 
