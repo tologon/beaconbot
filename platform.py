@@ -4,6 +4,7 @@ from position_tracker import *
 from numpy import sign
 from time import sleep
 import atexit
+import sys
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
@@ -106,11 +107,11 @@ class Platform(object):
         if abs(theta) <= 90:
             MULTIPLIER = 1.0
         elif abs(theta) > 90 and abs(theta) <= 180:
-            MULTIPLIER = 1.1125
+            MULTIPLIER = 1.1112
         else:
             MULTIPLIER = 1.115
 
-        CUSTOM_TIME_DELAY   = 0.001
+        CUSTOM_TIME_DELAY   = 0.0005
         LEFT_TICK_RATIO     = (16.5/87.0)*MULTIPLIER
         RIGHT_TICK_RATIO    = (17.4/87.0)*MULTIPLIER
 
@@ -171,11 +172,13 @@ if __name__ == '__main__':
 
     platform = Platform()
     atexit.register(platform.shutdown)
+    
+    if len(sys.argv) == 1:
+        degrees = 90
+    else:
+        degrees = int(sys.argv[1])
 
     #print "platform state BEFORE:\t", platform.get_state()
-    platform.turn(90)
-    #platform.turn(-90)
-    #platform.turn(180)
-    #platform.turn(360)
+    platform.turn(degrees)
     sleep(0.5)
     #print "platform state AFTER:\t", platform.get_state()
