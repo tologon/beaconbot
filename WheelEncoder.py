@@ -14,7 +14,7 @@ class WheelEncoder:
   ticksPerTurn = 0
   radius = 0.0
   distPerTick = 0.0
-  PI = 3.1415
+  PI = 3.14159265358979
 
   def __init__(self, inputPin, ticksPerTurn, radius):
     self.inputPin = inputPin
@@ -45,8 +45,11 @@ class WheelEncoder:
   def setRadius(self, rad):
     self.radius = rad
 
+  def getCircumference(self):
+    return 2.0 * self.PI * self.radius
+
   def setDistPerTick(self, ticksPerTurn, radius):
-    self.distPerTick = ( 2 * self.PI * radius ) / ticksPerTurn
+    self.distPerTick = ( 2.0 * self.PI * radius ) / ticksPerTurn
 
   def getCurrentDistance(self):
     return self.ticks * self.distPerTick

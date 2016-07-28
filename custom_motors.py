@@ -1,3 +1,5 @@
+from Adafruit_MotorHAT import *
+
 LEFT  = 'LEFT'
 RIGHT = 'RIGHT'
 

@@ -1,47 +1,44 @@
 from WheelEncoder import WheelEncoder
 from Adafruit_MotorHAT import *
+from PID import PID
 from custom_motors import *
 import atexit
+import time
 
-motor_hat = Adafruit_MotorHAT(addrx=0x60)
+def drive_straight(distance_to_travel):
+    motor_hat = Adafruit_MotorHAT(addr=0x60)
 
-def turnOffMotors():
-    # diable 4 motors
-    for motor in range(1, 5):
-        motor_hat.getMotor(motor).run(Adafruit_MotorHAT.RELEASE)
-
-atexit.register(turnOffMotors)
-
-if __name__ == '__main__':
     left_motor  = motor_hat.getMotor(2)
     right_motor = motor_hat.getMotor(1)
 
-    master_power = 200   # left encoder
-    slave_power  = 200   # right encoder
+    initial_power = 100
+    master_power = initial_power + 3  # left encoder
+    slave_power  = initial_power - 5   # right encoder
 
-    error = 0
-    # Constant of Proportionality
-    # needs tuning (until the value is just right)
-    kp = 0.2
-
-    left_encoder = WheelEncoder(20, 20, 3.25)
-    right_encoder = WheelEncoder(21, 20, 3.25)
-
-    left_encoder.setTicksPerTurn(0)
-    right_encoder.setTicksPerTurn(0)
+    left_encoder = WheelEncoder(20, 20, 1.625) # 3.25
+    right_encoder = WheelEncoder(21, 20, 1.625)
 
     motors = Motors(right_motor, right_encoder, left_motor, left_encoder)
 
-    while 1:
-        motors._set_power_directional(LEFT, master_power)
-        motors._set_power_directional(RIGHT, slave_power)
+    time_delay = 0.25
+    onetick_power_change = 4
 
-        error = left_encoder.getTicksPerTurn() - right_encoder.getTicksPerTurn()
+    distance_travelled = 0
+    distance_to_travel = 100 # cm
+	
+    while distance_travelled < distance_to_travel:
+        signed_error = (left_encoder.getTicks() - right_encoder.getTicks()) * onetick_power_change
+	
+	master_power -= signed_error / 2.0
+ 	slave_power += signed_error / 2.0	
 
-        slave_power += (error * kp)
+	motors._set_power_directional(LEFT, int(master_power))
+        motors._set_power_directional(RIGHT, int(slave_power))
+	
+	#print "l: %3.0f r: %3.0f lt: %2.0f rt: %2.0f d: %2.0f dst: %3.0fcm?" % (master_power, slave_power, left_encoder.getTicks(), right_encoder.getTicks(), signed_error, distance_travelled)
+	distance_travelled += (left_encoder.getCurrentDistance() + right_encoder.getCurrentDistance()) / 2.0
+	
+        left_encoder.resetTicks()
+	right_encoder.resetTicks()
 
-        left_encoder.setTicksPerTurn(0)
-        right_encoder.setTicksPerTurn(0)
-
-        # repeat loop every 0.01 seconds
-        time.sleep(0.01)
+	time.sleep(time_delay)

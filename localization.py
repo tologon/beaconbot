@@ -4,13 +4,14 @@ from numpy import asarray
 from time import time
 
 class Localizer(object):
-    def __init__(self, samples=12):
+    def __init__(self, samples=50):
         self.samples = samples
         self.state = []
 
     def update(self, sample):
         """Takes an ((x, y), distance) as a sample"""
         # Ensure we never go over the sample count
+        print sample
         if len(self.state) >= self.samples:
             self.state = self.state[1:]
         self.state.append(sample)
@@ -54,7 +55,7 @@ class Localizer(object):
         return minimize(fun=self._error,
                         method='SLSQP',
                         jac=self._error_gradient,
-                        x0=(0,0),
+                        x0=(30,15),
                         options={'eps':1.4901e-09,'maxiter':13}
                         ).x
 
