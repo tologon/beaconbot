@@ -10,14 +10,13 @@ RIGHT = 'RIGHT'
 
 
 class Platform(object):
-    def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.05):
+    def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.02):
         self.motor_hat = Adafruit_MotorHAT(addr=0x60)
 
-        # DO NOT CHANGE THOSE VALUES AND DELAY
+        # DO NOT CHANGE THOSE VALUES
         # REQUIRED VALUES FOR CORRECT TURNING (WITH UP TO 5 DEGREE ACCURACY):
         # self.left_trim    = -7
         # self.right_trim   = 6
-        # self.delay        = 0.05
         self.left_trim = -7
         self.right_trim = 6
 
@@ -104,10 +103,14 @@ class Platform(object):
         self.shutdown()
 
     def turn(self, theta):
-        LEFT_TICK_RATIO     = 20.0/85.0
-        RIGHT_TICK_RATIO    = 16.0/85.0
-        left_tick_goal  = 15
-        right_tick_goal = 15
+        CUSTOM_TIME_DELAY   = 0.02
+        LEFT_TICK_RATIO     = 18.0/87.0
+        RIGHT_TICK_RATIO    = 17.0/87.0
+
+        left_tick_goal      = int(LEFT_TICK_RATIO * theta)
+        right_tick_goal     = int(RIGHT_TICK_RATIO * theta)
+        left_ticks_to_goal  = left_tick_goal
+        right_ticks_to_goal = right_tick_goal
 
         self.left_encoder.resetTicks()
         self.right_encoder.resetTicks()
@@ -118,11 +121,26 @@ class Platform(object):
         self._set_power_directional(LEFT, int(left_power))
         self._set_power_directional(RIGHT, int(right_power))
 
-        while self.left_encoder.getTicks() < left_tick_goal or self.right_encoder.getTicks() < right_tick_goal:
-            print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
-            sleep(self.delay)
+        while left_ticks_to_goal > 0 and right_ticks_to_goal > 0:
+            left_ticks = self.left_encoder.getTicks()
+            left_ticks_to_goal = left_tick_goal - left_ticks
+
+            right_ticks = self.right_encoder.getTicks()
+            right_ticks_to_goal = right_tick_goal - right_ticks
+
+            ticks_to_goal_diff = left_ticks_to_goal - right_ticks_to_goal
+            if ticks_to_goal_diff > 1:
+                left_ticks_to_goal -= 1
+                right_ticks_to_goal += 1
+            elif ticks_to_goal_diff < -1:
+                left_ticks_to_goal += 1
+                right_ticks_to_goal -= 1
+            
+            #print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+            sleep(CUSTOM_TIME_DELAY)
 
         
+        print "left tick goal: %6.2f, right tick goal: %6.2f" % (left_tick_goal, right_tick_goal)
         print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
 
@@ -160,7 +178,7 @@ if __name__ == '__main__':
     platform = Platform()
     atexit.register(platform.shutdown)
 
-    print "platform state BEFORE:\t", platform.get_state()
+    #print "platform state BEFORE:\t", platform.get_state()
     platform.turn(90)
     sleep(0.5)
-    print "platform state AFTER:\t", platform.get_state()
+    #print "platform state AFTER:\t", platform.get_state()
