@@ -13,10 +13,13 @@ class Platform(object):
     def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.05):
         self.motor_hat = Adafruit_MotorHAT(addr=0x60)
 
+        # DO NOT CHANGE THOSE VALUES AND DELAY
+        # REQUIRED VALUES FOR CORRECT TURNING (WITH UP TO 5 DEGREE ACCURACY):
+        # self.left_trim    = -7
+        # self.right_trim   = 6
+        # self.delay        = 0.05
         self.left_trim = -7
         self.right_trim = 6
-        #self.left_trim = 0
-        #self.right_trim = 0
 
         self.inter_wheel_distance = 15
 
@@ -101,8 +104,31 @@ class Platform(object):
         self.shutdown()
 
     def turn(self, theta):
+        LEFT_TICK_RATIO     = 20.0/85.0
+        RIGHT_TICK_RATIO    = 16.0/85.0
+        left_tick_goal  = 15
+        right_tick_goal = 15
+
+        self.left_encoder.resetTicks()
+        self.right_encoder.resetTicks()
+
+        left_power  = 80
+        right_power = -80
+
+        self._set_power_directional(LEFT, int(left_power))
+        self._set_power_directional(RIGHT, int(right_power))
+
+        while self.left_encoder.getTicks() < left_tick_goal or self.right_encoder.getTicks() < right_tick_goal:
+            print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+            sleep(self.delay)
+
+        
+        print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+        self.shutdown()
+
+        '''
         left_tick_goal = 0.2 * abs(theta)
-        right_tick_goal = 0.21 * abs(theta)
+        right_tick_goal = 0.22 * abs(theta)
 
         self.left_encoder.resetTicks()
         self.right_encoder.resetTicks()
@@ -116,16 +142,17 @@ class Platform(object):
         self._set_power_directional(RIGHT, int(right_power))
         
         while self.left_encoder.getTicks() < left_tick_goal or self.right_encoder.getTicks() < right_tick_goal:
-            #print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+            print "ticks diff: %2d - %2d = %2d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks(), self.left_encoder.getTicks() - self.right_encoder.getTicks())
             sleep(self.delay)
 
         left_distance = self.left_encoder.getCurrentDistance() * sign(theta)
         right_distance = self.right_encoder.getCurrentDistance() * sign(theta) * -1
-        print "platform.turn: updating PositionTracker with left=%f, right=%f" % (left_distance, right_distance)
+        #print "platform.turn: updating PositionTracker with left=%f, right=%f" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
 
-        #print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+        print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
+        '''
 
 if __name__ == '__main__':
     print "Motor Testing"
@@ -133,15 +160,7 @@ if __name__ == '__main__':
     platform = Platform()
     atexit.register(platform.shutdown)
 
-    print platform.get_state()
-    #platform.turn(90)
+    print "platform state BEFORE:\t", platform.get_state()
     platform.turn(90)
-    sleep(0.2)
-    platform.turn(-90)
-    sleep(0.2)
-    #platform.custom_right_turn(6)
-    print platform.get_state()
-
-    platform.shutdown()
-
-
+    sleep(0.5)
+    print "platform state AFTER:\t", platform.get_state()
