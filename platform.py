@@ -158,14 +158,10 @@ class Platform(object):
         print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
 
-        '''
         left_distance = self.left_encoder.getCurrentDistance() * sign(theta)
         right_distance = self.right_encoder.getCurrentDistance() * sign(theta) * -1
-        #print "platform.turn: updating PositionTracker with left=%f, right=%f" % (left_distance, right_distance)
+        print "platform.turn: updating PositionTracker with left=%6.2f, right=%6.2f" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
-
-        self.shutdown()
-        '''
 
 if __name__ == '__main__':
     print "Motor Testing"
@@ -178,7 +174,7 @@ if __name__ == '__main__':
     else:
         degrees = int(sys.argv[1])
 
-    #print "platform state BEFORE:\t", platform.get_state()
+    print "platform state BEFORE:\t", platform.get_state()
     platform.turn(degrees)
     sleep(0.5)
-    #print "platform state AFTER:\t", platform.get_state()
+    print "platform state AFTER:\t", platform.get_state()

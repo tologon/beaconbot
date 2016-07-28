@@ -37,7 +37,7 @@ class PositionTracker(object):
             while self.theta < -2*PI:
                 self.theta += (2*PI)
 
-            print "Updated PositionTracker: at x=%f, y=%f, theta=%f" % (self.x, self.y, self.theta * 180.0/3.1415)
+            print "Updated PositionTracker: at x=%6.2fcm, y=%6.2fcm, theta=%6.2f degrees" % (self.x, self.y, math.degrees(self.theta))
 
     def getState(self):
         return (self.x, self.y, math.degrees(self.theta))
