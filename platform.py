@@ -103,9 +103,16 @@ class Platform(object):
         self.shutdown()
 
     def turn(self, theta):
-        CUSTOM_TIME_DELAY   = 0.005
-        LEFT_TICK_RATIO     = 16.5/87.0
-        RIGHT_TICK_RATIO    = 17.25/87.0
+        if abs(theta) <= 90:
+            MULTIPLIER = 1.0
+        elif abs(theta) > 90 and abs(theta) <= 180:
+            MULTIPLIER = 1.1125
+        else:
+            MULTIPLIER = 1.115
+
+        CUSTOM_TIME_DELAY   = 0.001
+        LEFT_TICK_RATIO     = (16.5/87.0)*MULTIPLIER
+        RIGHT_TICK_RATIO    = (17.4/87.0)*MULTIPLIER
 
         left_tick_goal      = abs(LEFT_TICK_RATIO * theta)
         right_tick_goal     = abs(RIGHT_TICK_RATIO * theta)
@@ -119,8 +126,8 @@ class Platform(object):
             left_power  = 70
             right_power = -80
         elif theta < 0:
-            left_power  = -80
-            right_power = 70
+            left_power  = -70
+            right_power = 80
         else:
             return
 
@@ -128,6 +135,8 @@ class Platform(object):
         self._set_power_directional(RIGHT, int(right_power))
 
         while left_ticks_to_goal > 0 or right_ticks_to_goal > 0:
+            sleep(CUSTOM_TIME_DELAY)
+            
             left_ticks = self.left_encoder.getTicks()
             left_ticks_to_goal = left_tick_goal - left_ticks
 
@@ -143,38 +152,17 @@ class Platform(object):
                 right_ticks_to_goal -= 1
             
             #print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
-            sleep(CUSTOM_TIME_DELAY)
-
         
         print "left tick   goal:  %5.2f, right tick   goal:  %5.2f" % (left_tick_goal, right_tick_goal)
         print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
 
         '''
-        left_tick_goal = 0.2 * abs(theta)
-        right_tick_goal = 0.22 * abs(theta)
-
-        self.left_encoder.resetTicks()
-        self.right_encoder.resetTicks()
-
-        if theta >= 0:
-            left_power, right_power = 100, -100
-        else:
-            left_power, right_power = -100, 100
-        
-        self._set_power_directional(LEFT, int(left_power))
-        self._set_power_directional(RIGHT, int(right_power))
-        
-        while self.left_encoder.getTicks() < left_tick_goal or self.right_encoder.getTicks() < right_tick_goal:
-            print "ticks diff: %2d - %2d = %2d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks(), self.left_encoder.getTicks() - self.right_encoder.getTicks())
-            sleep(self.delay)
-
         left_distance = self.left_encoder.getCurrentDistance() * sign(theta)
         right_distance = self.right_encoder.getCurrentDistance() * sign(theta) * -1
         #print "platform.turn: updating PositionTracker with left=%f, right=%f" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
 
-        print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
         '''
 
@@ -185,8 +173,8 @@ if __name__ == '__main__':
     atexit.register(platform.shutdown)
 
     #print "platform state BEFORE:\t", platform.get_state()
-    #platform.turn(90)
-    platform.turn(-90)
+    platform.turn(90)
+    #platform.turn(-90)
     #platform.turn(180)
     #platform.turn(360)
     sleep(0.5)
