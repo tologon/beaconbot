@@ -103,20 +103,26 @@ class Platform(object):
         self.shutdown()
 
     def turn(self, theta):
-        CUSTOM_TIME_DELAY   = 0.01
-        LEFT_TICK_RATIO     = 17.0/87.0
-        RIGHT_TICK_RATIO    = 18.0/87.0
+        CUSTOM_TIME_DELAY   = 0.005
+        LEFT_TICK_RATIO     = 16.5/87.0
+        RIGHT_TICK_RATIO    = 17.25/87.0
 
-        left_tick_goal      = int(LEFT_TICK_RATIO * theta)
-        right_tick_goal     = int(RIGHT_TICK_RATIO * theta)
+        left_tick_goal      = abs(LEFT_TICK_RATIO * theta)
+        right_tick_goal     = abs(RIGHT_TICK_RATIO * theta)
         left_ticks_to_goal  = left_tick_goal
         right_ticks_to_goal = right_tick_goal
 
         self.left_encoder.resetTicks()
         self.right_encoder.resetTicks()
 
-        left_power  = 80
-        right_power = -80
+        if theta > 0:
+            left_power  = 70
+            right_power = -80
+        elif theta < 0:
+            left_power  = -80
+            right_power = 70
+        else:
+            return
 
         self._set_power_directional(LEFT, int(left_power))
         self._set_power_directional(RIGHT, int(right_power))
@@ -140,8 +146,8 @@ class Platform(object):
             sleep(CUSTOM_TIME_DELAY)
 
         
-        print "left tick   goal:  %3d, right tick   goal:  %3d" % (left_tick_goal, right_tick_goal)
-        print "left actual ticks: %3d, right actual ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+        print "left tick   goal:  %5.2f, right tick   goal:  %5.2f" % (left_tick_goal, right_tick_goal)
+        print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
         self.shutdown()
 
         '''
@@ -179,7 +185,8 @@ if __name__ == '__main__':
     atexit.register(platform.shutdown)
 
     #print "platform state BEFORE:\t", platform.get_state()
-    platform.turn(90)
+    #platform.turn(90)
+    platform.turn(-90)
     #platform.turn(180)
     #platform.turn(360)
     sleep(0.5)
