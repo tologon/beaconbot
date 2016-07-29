@@ -23,7 +23,7 @@ class Platform(object):
 
         # TEST VALUE
         #self.inter_wheel_distance = 5.75
-        self.inter_wheel_distance = 15
+        self.inter_wheel_distance = 14.605
 
         self.right_motor = self.motor_hat.getMotor(right_motor_pin)
         self.right_encoder = WheelEncoder(right_encoder_pin, 20, 1.625)
