@@ -21,6 +21,8 @@ class Platform(object):
         self.left_trim = -7
         self.right_trim = 6
 
+        # TEST VALUE
+        #self.inter_wheel_distance = 5.75
         self.inter_wheel_distance = 15
 
         self.right_motor = self.motor_hat.getMotor(right_motor_pin)
@@ -144,6 +146,9 @@ class Platform(object):
             right_ticks = self.right_encoder.getTicks()
             right_ticks_to_goal = right_tick_goal - right_ticks
 
+            if not (left_ticks_to_goal > 0 or right_ticks_to_goal > 0):
+                break
+
             ticks_to_goal_diff = left_ticks_to_goal - right_ticks_to_goal
             if ticks_to_goal_diff > 1:
                 left_ticks_to_goal -= 1
@@ -160,7 +165,7 @@ class Platform(object):
 
         left_distance = self.left_encoder.getCurrentDistance() * sign(theta)
         right_distance = self.right_encoder.getCurrentDistance() * sign(theta) * -1
-        print "platform.turn: updating PositionTracker with left=%6.2f, right=%6.2f" % (left_distance, right_distance)
+        print "platform.turn: updating PositionTracker with left=%3.2fcm, right=%3.2fcm" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
 
 if __name__ == '__main__':
