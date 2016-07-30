@@ -5,13 +5,11 @@ from numpy import arctan,sqrt
 from platform import Platform
 from beacon import BeaconSensor
 from localization import Localizer
-from numpy import sin,cos,array
+from numpy import sin,cos,array,arctan2
+from time import sleep
 from math import pi as PI
 
-#QtGui.QApplication.setGraphicsSystem('raster')
 app = QtGui.QApplication([])
-#mw = QtGui.QMainWindow()
-#mw.resize(800,800)
 
 win = pg.GraphicsWindow(title="BeaconBot")
 win.resize(800,400)
@@ -38,10 +36,10 @@ x_data = [0]
 y_data = [0]
 
 def getCircle(radius, offset):
-    circle_x = array([cos(PI*(i+1)/180.0)*radius + offset[0] for i in range(0, 360)])
-    circle_y = array([sin(PI*(i+1)/180.0)*radius + offset[1] for i in range(0, 360)])
+    pi = 3.1415
+    circle_x = array([cos(pi*(i+1)/180.0)*radius + offset[0] for i in range(0, 360)])
+    circle_y = array([sin(pi*(i+1)/180.0)*radius + offset[1] for i in range(0, 360)])
     return (circle_x, circle_y)
-
 
 platform = Platform()
 atexit.register(platform.shutdown)
@@ -50,51 +48,61 @@ localizer = Localizer()
 beacon_sensor = BeaconSensor('0c:f3:ee:04:22:3d')
 
 def on_click(event):
-    # mouse click - point detection (X and Y coordinates)
     point = location_plot.getViewBox().mapSceneToView(event.scenePos()).toPoint()
-
     # Plot the point the user clicked
     location_plot.plot([point.x(), point.x()+0.01], [point.y(), point.y()+0.01], pen=pg.mkPen(width=9, color='g'))
-    target_x = point.x()
-    target_y = -1*point.y()
-
-    my_x, my_y, my_theta = platform.get_state()
-    to_turn = 0
-    if not (target_x == my_x):
-        to_turn += arctan(1.0*(target_y - my_y)/(target_x - my_x)) * (360/(2*PI))
-    else:
-        print "ignored arctan."
-
-    to_turn -= my_theta * (360/(2*PI))
-
-    x_sign = target_x-my_x
-    y_sign = target_y-my_y
-    print "x_sign=%f y_sign=%f" % (x_sign, y_sign)
-
-    while to_turn > 180.0:
-        to_turn -= 360.0
-    while to_turn < -180.0:
-        to_turn += 360.0
-
-    to_drive = sqrt((target_y-my_y)**2+(target_x-my_x)**2)
-
-    platform.turn(to_turn)
-    print "Turning %f%%." % (to_turn)
-
-    my_x, my_y, my_theta = platform.get_state()
-    # Save the location
-
-    heading_plot.clear()
-    heading_plot.plot([0, cos(my_theta)], [0, -1*sin(my_theta)], pen='b')
-
-
+    platform.go_to_point(point.x(), point.y())
 
 win.scene().sigMouseClicked.connect(on_click)
 
 
+iterations = 6
+i = 0
+sampling_time = 1
 while True:
+    if i >= iterations:
+        platform.reset()
+        localizer.reset()
+        location_plot.clear()
+        x_data = [0]
+        y_data = [0]
+        i = 0
+    i += 1
+
+    # Sense
+    x = platform.x()
+    y = platform.y()
+    beacon_sensor.scan(1.5)
+    dist = beacon_sensor.get_distance()
+    sampling_time = dist/5.0
+
+    if dist <= 35:
+        print "VICTORY!"
+        break
+
+    # Give the localizer the sample
+    sample = ((x, y), dist)
+    localizer.update(sample)
+
+    # Get the target location
+    go_to = localizer.target_location()
+
+    # Graphics
+    circle_x, circle_y = getCircle(dist, (platform.x(), platform.y()))
+    location_plot.plot(circle_x, circle_y, pen=pg.mkPen(width=1, color='w'))
+    x_data.append(platform.x())
+    y_data.append(platform.y())
+    location_plot.plot(x_data, y_data, pen=pg.mkPen(width=4.5, color='r'))
+    heading_plot.clear()
+    heading = platform.theta()
+    heading_plot.plot([0, cos(heading)], [0, sin(heading)], pen='b')
+    location_plot.plot([go_to[0], go_to[0]+0.01], [go_to[1], go_to[1]+0.01], pen=pg.mkPen(width=9, color='b'))
+
     pg.QtGui.QApplication.processEvents()
 
+    platform.go_to_point(go_to[0], go_to[1])
+
+    pg.QtGui.QApplication.processEvents()
 
 if __name__ == '__main__':
     import sys

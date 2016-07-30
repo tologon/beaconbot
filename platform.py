@@ -1,10 +1,11 @@
 from Adafruit_MotorHAT import *
 from WheelEncoder import WheelEncoder
 from position_tracker import *
-from numpy import sign
+from numpy import sign,arctan2,sqrt
 from time import sleep
 import atexit
 import sys
+from math import pi as PI
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
@@ -23,7 +24,7 @@ class Platform(object):
 
         # TEST VALUE
         #self.inter_wheel_distance = 5.75
-        self.inter_wheel_distance = 14.605
+        self.inter_wheel_distance = 14.67
 
         self.right_motor = self.motor_hat.getMotor(right_motor_pin)
         self.right_encoder = WheelEncoder(right_encoder_pin, 20, 1.625)
@@ -62,17 +63,49 @@ class Platform(object):
 
         self._set_power(motor, power)
 
+    def reset(self):
+        self.position_tracker.reset()
+
+    def x(self):
+        return self.get_state()[0]
+
+    def y(self):
+        return self.get_state()[1]
+
+    def theta(self):
+        return self.get_state()[2]
+
     def get_state(self):
         return self.position_tracker.getState()
 
     def shutdown(self):
         for motor in range(1, 5):
             self.motor_hat.getMotor(motor).run(Adafruit_MotorHAT.RELEASE)
+        self._set_power_directional(LEFT, 0)
+        self._set_power_directional(RIGHT, 0)
+
+    def go_to_point(self, x, y):
+        my_x, my_y, my_theta = self.get_state()
+        delta_x = x-my_x
+        delta_y = y-my_y
+
+        to_turn = arctan2(delta_y, delta_x) - my_theta
+
+        while to_turn > PI:
+            to_turn -= 2*PI
+        while to_turn < -1*PI:
+            to_turn += 2*PI
+
+        to_drive = sqrt((delta_x)**2+(delta_y)**2)
+
+        self.turn(to_turn)
+        sleep(1)
+        self.drive_straight(to_drive)
 
     def drive_straight(self, distance_to_travel):
-        initial_power = 110
-	master_power = initial_power  # left encoder
-	slave_power  = initial_power   # right encoder
+        initial_power = 130
+	master_power = initial_power#-15  # left encoder
+	slave_power  = initial_power#+4   # right encoder
 	onetick_power_change = 4
 
         left_distance = 0
@@ -81,10 +114,11 @@ class Platform(object):
 	distance_travelled = 0
 
 	while distance_travelled < distance_to_travel:
-	    signed_error = (self.left_encoder.getTicks() - self.right_encoder.getTicks()) * onetick_power_change
+#	    signed_error = (self.left_encoder.getTicks() - self.right_encoder.getTicks()) * onetick_power_change
+             
 	    
-	    master_power -= signed_error / 2.0
-	    slave_power += signed_error / 2.0	
+#	    master_power -= signed_error / 2.0
+#	    slave_power += signed_error / 2.0	
 
 	    self._set_power_directional(LEFT, int(master_power))
 	    self._set_power_directional(RIGHT, int(slave_power))
@@ -105,38 +139,40 @@ class Platform(object):
 
         self.shutdown()
 
-    def turn(self, theta):
-        if abs(theta) <= 90:
+    def turn(self, radians):
+        if abs(radians) <= PI/2:
             MULTIPLIER = 1.0
-        elif abs(theta) > 90 and abs(theta) <= 180:
+        elif abs(radians) > PI/2 and abs(radians) <= PI:
             MULTIPLIER = 1.1112
         else:
             MULTIPLIER = 1.115
 
         CUSTOM_TIME_DELAY   = 0.0005
-        LEFT_TICK_RATIO     = (16.5/87.0)*MULTIPLIER
-        RIGHT_TICK_RATIO    = (17.4/87.0)*MULTIPLIER
+        LEFT_TICK_RATIO     = (16.5/1.518)*MULTIPLIER
+        RIGHT_TICK_RATIO    = (17.4/1.518)*MULTIPLIER
 
-        left_tick_goal      = abs(LEFT_TICK_RATIO * theta)
-        right_tick_goal     = abs(RIGHT_TICK_RATIO * theta)
+        left_tick_goal      = abs(LEFT_TICK_RATIO * radians)
+        right_tick_goal     = abs(RIGHT_TICK_RATIO * radians)
         left_ticks_to_goal  = left_tick_goal
         right_ticks_to_goal = right_tick_goal
 
         self.left_encoder.resetTicks()
         self.right_encoder.resetTicks()
 
-        if theta > 0:
-            left_power  = 70
-            right_power = -80
-        elif theta < 0:
-            left_power  = -70
-            right_power = 80
+        if radians > 0:
+            left_power  = -90
+            right_power = 100
+        elif radians < 0:
+            left_power  = 90
+            right_power = -100
         else:
             return
 
         self._set_power_directional(LEFT, int(left_power))
         self._set_power_directional(RIGHT, int(right_power))
 
+        # in radians
+        #angle = 0
         while left_ticks_to_goal > 0 or right_ticks_to_goal > 0:
             sleep(CUSTOM_TIME_DELAY)
             
@@ -157,16 +193,21 @@ class Platform(object):
                 left_ticks_to_goal += 1
                 right_ticks_to_goal -= 1
             
+            #angle = ((self.right_encoder.getCurrentDistance() - self.left_encoder.getCurrentDistance())/self.inter_wheel_distance)
+            #print "angle: %4.2f radians" % (angle)
             #print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+            self._set_power_directional(LEFT, int(left_power))
+            self._set_power_directional(RIGHT, int(right_power))
         
         print "left tick   goal:  %5.2f, right tick   goal:  %5.2f" % (left_tick_goal, right_tick_goal)
         print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
-        self.shutdown()
 
-        left_distance = self.left_encoder.getCurrentDistance() * sign(theta)
-        right_distance = self.right_encoder.getCurrentDistance() * sign(theta) * -1
+        left_distance = self.left_encoder.getCurrentDistance() * sign(radians)
+        right_distance = self.right_encoder.getCurrentDistance() * sign(radians) * -1
         print "platform.turn: updating PositionTracker with left=%3.2fcm, right=%3.2fcm" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
+
+        self.shutdown()
 
 if __name__ == '__main__':
     print "Motor Testing"
@@ -179,7 +220,10 @@ if __name__ == '__main__':
     else:
         degrees = int(sys.argv[1])
 
+    radians = math.radians(degrees)
+    print "degrees: %3d, radians: %3.2f" % (degrees, radians)
+
     print "platform state BEFORE:\t", platform.get_state()
-    platform.turn(degrees)
+    platform.turn(radians)
     sleep(0.5)
     print "platform state AFTER:\t", platform.get_state()

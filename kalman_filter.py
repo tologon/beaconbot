@@ -9,7 +9,7 @@ class KalmanFilter:
         # current estimation
         self.xhat = 0.0
         # prior error covariance
-        self.P = 1.0
+        self.P = 10.0
         # range for the possible RSSI values (in Db)
         # self.lowest, self.highest = -30.0, 0.0
         self.z = 0

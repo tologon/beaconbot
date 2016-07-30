@@ -4,7 +4,7 @@ from numpy import asarray
 from time import time
 
 class Localizer(object):
-    def __init__(self, samples=50):
+    def __init__(self, samples=10):
         self.samples = samples
         self.state = []
 
@@ -16,8 +16,8 @@ class Localizer(object):
             self.state = self.state[1:]
         self.state.append(sample)
 
-    def my_location(self):
-        return self.state[-1][0]
+    def reset(self):
+        self.state = []
 
     def _error(self, test_point):
         """Takes a test point and calculates the error based on known
@@ -55,7 +55,7 @@ class Localizer(object):
         return minimize(fun=self._error,
                         method='SLSQP',
                         jac=self._error_gradient,
-                        x0=(30,15),
+                        x0=(15,0),
                         options={'eps':1.4901e-09,'maxiter':13}
                         ).x
 
