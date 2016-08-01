@@ -12,7 +12,7 @@ from math import pi as PI
 app = QtGui.QApplication([])
 
 win = pg.GraphicsWindow(title="BeaconBot")
-win.resize(800,400)
+win.resize(800,800)
 win.setWindowTitle('BeaconBot Vizualization')
 
 # Enable antialiasing for prettier plots
@@ -23,14 +23,14 @@ location_plot = win.addPlot(title="Location")
 location_plot.showGrid(x=True, y=True)
 location_plot.setLabel('left', 'Y Position', units='cm')
 location_plot.setLabel('bottom', 'X Position', units='cm')
-location_plot.setXRange(-100, 100)
-location_plot.setYRange(-100, 100)
+location_plot.setXRange(-250, 250)
+location_plot.setYRange(-250, 250)
 
 # Configure the heading plot
-heading_plot = win.addPlot(title="Heading")
-heading_plot.showGrid(x=True, y=True)
-heading_plot.setXRange(-1, 1)
-heading_plot.setYRange(-1, 1)
+#heading_plot = win.addPlot(title="Heading")
+#heading_plot.showGrid(x=True, y=True)
+#heading_plot.setXRange(-1, 1)
+#heading_plot.setYRange(-1, 1)
 
 x_data = [0]
 y_data = [0]
@@ -45,7 +45,6 @@ platform = Platform()
 atexit.register(platform.shutdown)
 robot_state = platform.get_state()
 localizer = Localizer()
-beacon_sensor = BeaconSensor('0c:f3:ee:04:22:3d')
 
 def on_click(event):
     point = location_plot.getViewBox().mapSceneToView(event.scenePos()).toPoint()
@@ -56,7 +55,7 @@ def on_click(event):
 win.scene().sigMouseClicked.connect(on_click)
 
 
-iterations = 6
+iterations = 600
 i = 0
 sampling_time = 1
 while True:
@@ -72,8 +71,15 @@ while True:
     # Sense
     x = platform.x()
     y = platform.y()
-    beacon_sensor.scan(1.5)
-    dist = beacon_sensor.get_distance()
+    dist = platform.get_beacon_distance(1)
+    print "Read distance as %f" % dist
+    platform.reset_beacon_sensor()
+
+    # Calculate the position of the object to avoid
+    forward_distance = platform.get_forward_distance()
+    object_x = x + forward_distance*cos(platform.theta())
+    object_y = y + forward_distance*sin(platform.theta())
+
     sampling_time = dist/5.0
 
     if dist <= 35:
@@ -93,10 +99,11 @@ while True:
     x_data.append(platform.x())
     y_data.append(platform.y())
     location_plot.plot(x_data, y_data, pen=pg.mkPen(width=4.5, color='r'))
-    heading_plot.clear()
-    heading = platform.theta()
-    heading_plot.plot([0, cos(heading)], [0, sin(heading)], pen='b')
-    location_plot.plot([go_to[0], go_to[0]+0.01], [go_to[1], go_to[1]+0.01], pen=pg.mkPen(width=9, color='b'))
+    #heading_plot.clear()
+    #heading = platform.theta()
+    #heading_plot.plot([0, cos(heading)], [0, sin(heading)], pen='b')
+    location_plot.plot([go_to[0], go_to[0]+0.01], [go_to[1], go_to[1]+0.01], pen=pg.mkPen(width=9, color='g'))
+    location_plot.plot([object_x, object_x+0.01], [object_y, object_y+0.01], pen=pg.mkPen(width=20, color='b'))
 
     pg.QtGui.QApplication.processEvents()
 

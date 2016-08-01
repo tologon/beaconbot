@@ -1,6 +1,8 @@
 from Adafruit_MotorHAT import *
 from WheelEncoder import WheelEncoder
 from position_tracker import *
+from beacon import *
+from distance_sensor import *
 from numpy import sign,arctan2,sqrt
 from time import sleep
 import atexit
@@ -9,7 +11,6 @@ from math import pi as PI
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
-
 
 class Platform(object):
     def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.05):
@@ -20,7 +21,7 @@ class Platform(object):
         # self.left_trim    = -7
         # self.right_trim   = 6
         self.left_trim = -7
-        self.right_trim = 6
+        self.right_trim = 8
 
         # TEST VALUE
         #self.inter_wheel_distance = 5.75
@@ -36,6 +37,8 @@ class Platform(object):
         self.left_state  = Adafruit_MotorHAT.RELEASE
 
         self.position_tracker= PositionTracker(self.inter_wheel_distance)#-1.40)
+        self.beacon_sensor = BeaconSensor('0c:f3:ee:04:22:3d')
+
 
         self.delay = delay
 
@@ -84,6 +87,16 @@ class Platform(object):
         self._set_power_directional(LEFT, 0)
         self._set_power_directional(RIGHT, 0)
 
+    def get_beacon_distance(self, time):
+        self.beacon_sensor.scan(time)
+        return self.beacon_sensor.get_distance()
+
+    def reset_beacon_sensor(self):
+        self.beacon_sensor.reset()
+
+    def get_forward_distance(self):
+        return distance(frequency=0.001)
+
     def go_to_point(self, x, y):
         my_x, my_y, my_theta = self.get_state()
         delta_x = x-my_x
@@ -99,13 +112,19 @@ class Platform(object):
         to_drive = sqrt((delta_x)**2+(delta_y)**2)
 
         self.turn(to_turn)
-        sleep(1)
+
+        sleep(0.3)
+
+        clearance = self.get_forward_distance()
+        if to_drive > clearance:
+            to_drive = clearance - 15
+
         self.drive_straight(to_drive)
 
     def drive_straight(self, distance_to_travel):
         initial_power = 130
-	master_power = initial_power#-15  # left encoder
-	slave_power  = initial_power#+4   # right encoder
+	master_power = initial_power-8  # left encoder
+	slave_power  = initial_power+3   # right encoder
 	onetick_power_change = 4
 
         left_distance = 0
@@ -132,6 +151,9 @@ class Platform(object):
 	    
 	    self.left_encoder.resetTicks()
 	    self.right_encoder.resetTicks()
+
+            if self.get_forward_distance() <= 10:
+                break
 
 	    sleep(self.delay)
 
@@ -215,15 +237,16 @@ if __name__ == '__main__':
     platform = Platform()
     atexit.register(platform.shutdown)
     
-    if len(sys.argv) == 1:
-        degrees = 90
-    else:
-        degrees = int(sys.argv[1])
+    #if len(sys.argv) == 1:
+    #    degrees = 90
+    #else:
+    #    degrees = int(sys.argv[1])
 
-    radians = math.radians(degrees)
-    print "degrees: %3d, radians: %3.2f" % (degrees, radians)
+    #radians = math.radians(degrees)
+    #print "degrees: %3d, radians: %3.2f" % (degrees, radians)
 
-    print "platform state BEFORE:\t", platform.get_state()
-    platform.turn(radians)
-    sleep(0.5)
-    print "platform state AFTER:\t", platform.get_state()
+    #print "platform state BEFORE:\t", platform.get_state()
+    #platform.turn(radians)
+    #sleep(0.5)
+    #print "platform state AFTER:\t", platform.get_state()
+    print platform.get_beacon_distance(10)

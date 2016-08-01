@@ -3,16 +3,15 @@ import RPi.GPIO as GPIO
 import time
 # set GPIO pin numbering
 GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
 # frequency (in seconds) = how frequently the distance should be measured
 # trigger = trigger pin on GPIO
 # echo = echo pin on GPIO
-def distance(frequency = 2, trigger = 4, echo = 17):
+def distance(frequency = 2, trigger = 16, echo = 19):
     # associate given pins with trigger and echo values
     TRIG = trigger
     ECHO = echo
-
-    print "Distance measurement in progress"
 
     # set trigger as gpio out
     GPIO.setup(TRIG, GPIO.OUT)
@@ -21,7 +20,6 @@ def distance(frequency = 2, trigger = 4, echo = 17):
 
     # set TRIG as LOW
     GPIO.output(TRIG, False)
-    print "Waiting For Sensor To Settle"
     time.sleep(frequency)
 
     # set TRIG as HIGH
@@ -52,17 +50,12 @@ def distance(frequency = 2, trigger = 4, echo = 17):
     distance = pulse_duration * MULTIPLIER
     distance = round(distance, 2)
 
-    # TODO: move distance printing into separate function or delete altogether
-    if distance > 2 and distance < 400:
-        # display distance with 0.5 cm calibration
-        print "Distance:", distance - 0.5, "cm"
-    elif distance >= 400:
-        print "Out Of Range"
-    elif distance <= 2:
-        print "Too Close"
-    print "\n"
     return distance - 0.5
 
 # assuming both distance and speed use same unit of length
 def time_left(distance, speed):
     return distance / speed
+
+if __name__ == '__main__':
+    while True:
+        distance()

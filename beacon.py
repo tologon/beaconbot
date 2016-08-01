@@ -26,12 +26,15 @@ class BeaconSensor(object):
         self.scanner = Scanner().withDelegate(KalmanDelegate(self.kalman_filter, ssid))
     def scan(self, time):
         self.scanner.scan(time)
+    def reset(self):
+        self.kalman_filter.reset()
     def get_distance(self):
         rssi = self.kalman_filter.estimation()
-        distance = e**( (rssi + 72) / (-2.0 * 10) )
+        distance = e**( (rssi + 53) / (-2.0 * 10) )
         return distance*100
 
 if __name__ == '__main__':
     sensor = BeaconSensor('0c:f3:ee:04:22:3d')
-    sensor.scan(0.1)
-    print sensor.getDistance()
+    while True:
+        sensor.scan(0.01)
+        print sensor.get_distance()

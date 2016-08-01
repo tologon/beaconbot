@@ -2,14 +2,14 @@
 class KalmanFilter:
     def __init__(self):
         # process variance for VOLTAGE; might be different for RSSI
-        self.Q = 1e-5
+        self.Q = 0.008
         # estimate of measurement variance, change to see effect
         self.R = 0.1**2
         # initial guesses
         # current estimation
         self.xhat = 0.0
         # prior error covariance
-        self.P = 10.0
+        self.P = 1.0
         # range for the possible RSSI values (in Db)
         # self.lowest, self.highest = -30.0, 0.0
         self.z = 0
@@ -29,6 +29,16 @@ class KalmanFilter:
 
     def estimation(self):
         return self.xhat
+
+    def reset(self):
+        # initial guesses
+        # current estimation
+        self.xhat = 0.0
+        # prior error covariance
+        self.P = 1.0
+        # range for the possible RSSI values (in Db)
+        # self.lowest, self.highest = -30.0, 0.0
+        self.z = 0
 
     def print_result(self):
         print 'measured value: %6.2f' % self.z, "| current estimation: %6.2f" % self.xhat

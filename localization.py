@@ -4,7 +4,7 @@ from numpy import asarray
 from time import time
 
 class Localizer(object):
-    def __init__(self, samples=10):
+    def __init__(self, samples=30):
         self.samples = samples
         self.state = []
 
@@ -56,7 +56,7 @@ class Localizer(object):
                         method='SLSQP',
                         jac=self._error_gradient,
                         x0=(15,0),
-                        options={'eps':1.4901e-09,'maxiter':13}
+                        options={'eps':1.4901e-09,'maxiter':20}
                         ).x
 
 
