@@ -153,25 +153,30 @@ class Platform(object):
         self.shutdown()
 
     def turn(self, radians):
+        # multiplier is a correction multiplier for angle;
+        # the bigger the turn, the more ticks needs to happen (hence multiplier presence)
         if abs(radians) <= PI/2:
-            MULTIPLIER = 1.0
+            multiplier = 1.0
         elif abs(radians) > PI/2 and abs(radians) <= PI:
-            MULTIPLIER = 1.1112
+            multiplier = 1.1112
         else:
-            MULTIPLIER = 1.115
+            multiplier = 1.115
 
-        CUSTOM_TIME_DELAY   = 0.0005
-        LEFT_TICK_RATIO     = (16.5/1.518)*MULTIPLIER
-        RIGHT_TICK_RATIO    = (17.4/1.518)*MULTIPLIER
+        # Need a custom time delay to ensure # of encoders' ticks counted correctly
+        custom_time_delay   = 0.0005
+        # Values obtained via experiments, might be changed if needed
+        left_tick_ratio     = (16.5/1.518)*multiplier
+        right_tick_ratio    = (17.4/1.518)*multiplier
 
-        left_tick_goal      = abs(LEFT_TICK_RATIO * radians)
-        right_tick_goal     = abs(RIGHT_TICK_RATIO * radians)
+        left_tick_goal      = abs(left_tick_ratio * radians)
+        right_tick_goal     = abs(right_tick_ratio * radians)
         left_ticks_to_goal  = left_tick_goal
         right_ticks_to_goal = right_tick_goal
 
         self.left_encoder.resetTicks()
         self.right_encoder.resetTicks()
 
+        # Set the powers to motors based off radians' value
         if radians > 0:
             left_power  = -90
             right_power = 100
@@ -184,10 +189,11 @@ class Platform(object):
         self._set_power_directional(LEFT, int(left_power))
         self._set_power_directional(RIGHT, int(right_power))
 
-        # in radians
+        # Debug code
+        # angle (in radians)
         #angle = 0
         while left_ticks_to_goal > 0 or right_ticks_to_goal > 0:
-            sleep(CUSTOM_TIME_DELAY)
+            sleep(custom_time_delay)
             
             left_ticks = self.left_encoder.getTicks()
             left_ticks_to_goal = left_tick_goal - left_ticks
@@ -195,6 +201,8 @@ class Platform(object):
             right_ticks = self.right_encoder.getTicks()
             right_ticks_to_goal = right_tick_goal - right_ticks
 
+            # Inverse of the while loop clause in case goal is reached
+            # and the beaconbot needs to stop turning
             if not (left_ticks_to_goal > 0 or right_ticks_to_goal > 0):
                 break
 
@@ -206,17 +214,18 @@ class Platform(object):
                 left_ticks_to_goal += 1
                 right_ticks_to_goal -= 1
             
+            # Debug code
             #angle = ((self.right_encoder.getCurrentDistance() - self.left_encoder.getCurrentDistance())/self.inter_wheel_distance)
             #print "angle: %4.2f radians" % (angle)
             #print "left encoder ticks: %3d, right encoder ticks: %3d" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
-            self._set_power_directional(LEFT, int(left_power))
-            self._set_power_directional(RIGHT, int(right_power))
         
+        # Debug code
         #print "left tick   goal:  %5.2f, right tick   goal:  %5.2f" % (left_tick_goal, right_tick_goal)
         #print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
 
         left_distance = self.left_encoder.getCurrentDistance() * sign(radians)
         right_distance = self.right_encoder.getCurrentDistance() * sign(radians) * -1
+        # Debug code
         #print "platform.turn: updating PositionTracker with left=%3.2fcm, right=%3.2fcm" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
 
