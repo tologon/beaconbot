@@ -5,10 +5,10 @@ import time
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-# frequency (in seconds) = how frequently the distance should be measured
+# delay (in seconds) = how frequently the distance should be measured
 # trigger = trigger pin on GPIO
 # echo = echo pin on GPIO
-def ultrasonic_distance(frequency = 2, trigger = 16, echo = 19):
+def ultrasonic_distance(delay = 2, trigger = 16, echo = 19):
     # associate given pins with trigger and echo values
     TRIG = trigger
     ECHO = echo
@@ -20,7 +20,7 @@ def ultrasonic_distance(frequency = 2, trigger = 16, echo = 19):
 
     # set TRIG as LOW
     GPIO.output(TRIG, False)
-    time.sleep(frequency)
+    time.sleep(delay)
 
     # set TRIG as HIGH
     GPIO.output(TRIG, True)
@@ -58,4 +58,4 @@ def time_left(distance, speed):
 
 if __name__ == '__main__':
     while True:
-        print ultrasonic_distance(frequency=0.0001)
+        print ultrasonic_distance(delay=0.0001)
