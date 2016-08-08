@@ -1,5 +1,5 @@
 from Adafruit_MotorHAT import *
-from WheelEncoder import WheelEncoder
+from wheel_encoder import WheelEncoder
 from position_tracker import *
 from beacon import *
 from distance_sensor import *
@@ -20,8 +20,9 @@ class Platform(object):
         # REQUIRED VALUES FOR CORRECT TURNING (WITH UP TO 5 DEGREE ACCURACY):
         # self.left_trim    = -7
         # self.right_trim   = 6
-        self.left_trim = -7
+        self.left_trim = -6
         self.right_trim = 8
+        self.obstacle_minimum_dist = 40
 
         # TEST VALUE
         #self.inter_wheel_distance = 5.75
@@ -95,10 +96,11 @@ class Platform(object):
         self.beacon_sensor.reset()
 
     def get_forward_distance(self):
-        return distance(frequency=0.001)
+        return ultrasonic_distance(frequency=0.001)
 
     def go_to_point(self, x, y):
         my_x, my_y, my_theta = self.get_state()
+        print "Going to %f, %f" % (x, y)
         delta_x = x-my_x
         delta_y = y-my_y
 
@@ -115,48 +117,64 @@ class Platform(object):
 
         sleep(0.3)
 
-        clearance = self.get_forward_distance()
-        if to_drive > clearance:
-            to_drive = clearance - 15
+        #clearance = self.get_forward_distance()
+        #print "clearance: ",clearance
+        #if to_drive > clearance:
+        #    to_drive = clearance - 15
 
         self.drive_straight(to_drive)
 
     def drive_straight(self, distance_to_travel):
         initial_power = 130
-	master_power = initial_power-8  # left encoder
-	slave_power  = initial_power+3   # right encoder
-	onetick_power_change = 4
+        master_power = initial_power-8  # left encoder
+        slave_power  = initial_power+3   # right encoder
+        onetick_power_change = 4
 
         left_distance = 0
         right_distance = 0
 
-	distance_travelled = 0
+        distance_travelled = 0
 
-	while distance_travelled < distance_to_travel:
+        self.left_encoder.resetTicks()
+        self.right_encoder.resetTicks()
+        last_beacon_dist = self.get_beacon_distance(0.01)
+        while ((self.left_encoder.getCurrentDistance() + self.right_encoder.getCurrentDistance()) / 2.0) < distance_to_travel:
 #	    signed_error = (self.left_encoder.getTicks() - self.right_encoder.getTicks()) * onetick_power_change
              
 	    
 #	    master_power -= signed_error / 2.0
 #	    slave_power += signed_error / 2.0	
 
-	    self._set_power_directional(LEFT, int(master_power))
-	    self._set_power_directional(RIGHT, int(slave_power))
+            self._set_power_directional(LEFT, int(master_power))
+            self._set_power_directional(RIGHT, int(slave_power))
 	    
-	    #print "l: %3.0f r: %3.0f lt: %2.0f rt: %2.0f d: %2.0f dst: %3.0fcm?" % (master_power, slave_power, self.left_encoder.getTicks(), self.right_encoder.getTicks(), signed_error, distance_travelled)
-	    distance_travelled += (self.left_encoder.getCurrentDistance() + self.right_encoder.getCurrentDistance()) / 2.0
+            print "lpower: %3.0f rpower: %3.0f ldist: %2.0f rdist: %2.0f dst: %3.0fcm?" % (master_power, slave_power, self.left_encoder.getCurrentDistance(), self.right_encoder.getCurrentDistance(), distance_travelled)
+            #distance_travelled += ((self.left_encoder.getCurrentDistance() + self.right_encoder.getCurrentDistance()) / 2.0)
 
-            left_distance += self.left_encoder.getCurrentDistance()
-            right_distance += self.right_encoder.getCurrentDistance()
-            print "platform.drive_straight: left=%f, right=%f" % (left_distance,right_distance)
+            #left_distance += self.left_encoder.getCurrentDistance()
+            #right_distance += self.right_encoder.getCurrentDistance()
+            #print "platform.drive_straight: left=%f, right=%f" % (left_distance,right_distance)
 	    
-	    self.left_encoder.resetTicks()
-	    self.right_encoder.resetTicks()
 
-            if self.get_forward_distance() <= 10:
+            # Break if we encounter an obstacle
+            forward_dist = self.get_forward_distance()
+            if forward_dist >=6 and forward_dist <= self.obstacle_minimum_dist:
+                print "Forward distance: %f" % forward_dist
                 break
 
-	    sleep(self.delay)
 
+
+            # Break if we're moving away from the beacon
+            beacon_dist = self.get_beacon_distance(0.01)
+            if beacon_dist > last_beacon_dist*1.1:
+                print "Stopping, beacon dist increased by %f" % (beacon_dist - last_beacon_dist)
+                break
+            last_beacon_dist = beacon_dist
+            
+
+        left_distance = self.left_encoder.getCurrentDistance()
+        right_distance = self.right_encoder.getCurrentDistance()
+        print left_distance, right_distance
         self.position_tracker.update(left_distance, right_distance)
 
         self.shutdown()
@@ -240,13 +258,13 @@ if __name__ == '__main__':
     #if len(sys.argv) == 1:
     #    degrees = 90
     #else:
-    #    degrees = int(sys.argv[1])
+    x = int(sys.argv[1])
+    y = int(sys.argv[2])
 
     #radians = math.radians(degrees)
     #print "degrees: %3d, radians: %3.2f" % (degrees, radians)
 
     #print "platform state BEFORE:\t", platform.get_state()
-    #platform.turn(radians)
+    platform.drive_straight(x)
     #sleep(0.5)
     #print "platform state AFTER:\t", platform.get_state()
-    print platform.get_beacon_distance(10)

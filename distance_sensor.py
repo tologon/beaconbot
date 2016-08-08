@@ -8,7 +8,7 @@ GPIO.setwarnings(False)
 # frequency (in seconds) = how frequently the distance should be measured
 # trigger = trigger pin on GPIO
 # echo = echo pin on GPIO
-def distance(frequency = 2, trigger = 16, echo = 19):
+def ultrasonic_distance(frequency = 2, trigger = 16, echo = 19):
     # associate given pins with trigger and echo values
     TRIG = trigger
     ECHO = echo
@@ -58,4 +58,4 @@ def time_left(distance, speed):
 
 if __name__ == '__main__':
     while True:
-        distance()
+        print ultrasonic_distance(frequency=0.0001)
