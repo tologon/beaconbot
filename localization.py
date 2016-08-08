@@ -15,7 +15,6 @@ class Localizer(object):
 
         # Ensure we never go over the sample count
         if len(self.state) >= self.samples:
-            #self.state = self.state[1:]
             best_error = float('inf')
             for i, sample in enumerate(self.state):
                 samples_excluding_this = asarray(self.state[:i] + self.state[i+1:])
