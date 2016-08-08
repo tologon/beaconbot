@@ -1,24 +1,19 @@
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
+# Open source libraries
 import atexit
-from platform import Platform
-from localization import Localizer
-from numpy import sin,cos,array
+import pyqtgraph as pg
 from time import sleep
 from math import pi as PI
+from numpy import sin,cos,array
+from pyqtgraph.Qt import QtGui, QtCore
+# Project-specific code
+from platform import Platform
+from localization import Localizer
 
-app = QtGui.QApplication([])
-
-win = pg.GraphicsWindow(title="BeaconBot")
-win.resize(800,800)
-win.setWindowTitle('BeaconBot Vizualization')
-
-# Enable antialiasing for prettier plots
-pg.setConfigOptions(antialias=True)
 
 # Produces a list of x and y coords
 # that plot a circle ([x1, x2,...], [y1, y2,...])
 def getCircle(radius, offset):
+    # Division by 180.0 is a conversion from degrees to radians
     circle_x = array([cos(PI*(i+1)/180.0)*radius + offset[0] for i in range(0, 360)])
     circle_y = array([sin(PI*(i+1)/180.0)*radius + offset[1] for i in range(0, 360)])
     return (circle_x, circle_y)
@@ -27,11 +22,22 @@ def on_click(event):
     # This gets the (x,y) position of the users mouse
     point = location_plot.getViewBox().mapSceneToView(event.scenePos()).toPoint()
     # Plot the point the and a *very* close point so make it show up on the graph
+    # 0.01 addition is an offset
     location_plot.plot([point.x(), point.x()+0.01], [point.y(), point.y()+0.01], pen=pg.mkPen(width=9, color='g'))
-
     # Drive the platform there.
     platform.go_to_point(point.x(), point.y())
 
+app = QtGui.QApplication([])
+
+# Enable antialiasing for prettier plots
+pg.setConfigOptions(antialias=True)
+
+# Plot window setup
+win = pg.GraphicsWindow(title="BeaconBot")
+window_width = 800
+window_height = 800
+win.resize(window_width, window_height)
+win.setWindowTitle('BeaconBot Vizualization')
 win.scene().sigMouseClicked.connect(on_click)
 
 # Configure location plot
@@ -39,9 +45,12 @@ location_plot = win.addPlot(title="Location")
 location_plot.showGrid(x=True, y=True)
 location_plot.setLabel('left', 'Y Position', units='cm')
 location_plot.setLabel('bottom', 'X Position', units='cm')
-location_plot.setXRange(-250, 250)
-location_plot.setYRange(-250, 250)
+x_min, x_max = -250, 250
+y_min, y_max = -250, 250
+location_plot.setXRange(x_min, x_max)
+location_plot.setYRange(y_min, y_max)
 
+# Collect data for plotting
 x_data = [0]
 y_data = [0]
 
@@ -50,10 +59,10 @@ atexit.register(platform.shutdown)
 localizer = Localizer()
 iterations = 8
 scan_time = 1.5
-i = 0
+loop_counter = 0
 
 while True:
-    if i >= iterations:
+    if loop_counter >= iterations:
         # Experimenting with resetting the program and plot
         # when the encoder error becomes too great
         platform.reset()
@@ -61,8 +70,8 @@ while True:
         location_plot.clear()
         x_data = [0]
         y_data = [0]
-        i = 0
-    i += 1
+        loop_counter = 0
+    loop_counter += 1
 
     # Get the state of the robot
     x = platform.x()
@@ -94,7 +103,6 @@ while True:
     position = localizer.target_location()
     print position
     beacon_x, beacon_y = position
-    #beacon_x *= -1
 
     print beacon_x
     print beacon_y
