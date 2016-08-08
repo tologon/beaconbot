@@ -1,19 +1,20 @@
-from Adafruit_MotorHAT import *
-from wheel_encoder import WheelEncoder
-from position_tracker import *
-from beacon import *
-from distance_sensor import *
-from numpy import sign,arctan2,sqrt
-from time import sleep
 import atexit
 import sys
+
+from Adafruit_MotorHAT import *
+from beacon import *
+from distance_sensor import *
 from math import pi as PI
+from numpy import sign,arctan2,sqrt
+from position_tracker import *
+from time import sleep
+from wheel_encoder import WheelEncoder
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
 
 class Platform(object):
-    def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, delay=0.05):
+    def __init__(self, right_motor_pin=1, right_encoder_pin=21, left_motor_pin=2, left_encoder_pin=20, beacon_ssid='0c:f3:ee:04:22:3d', delay=0.05):
         self.motor_hat = Adafruit_MotorHAT(addr=0x60)
 
         # DO NOT CHANGE THOSE VALUES
@@ -24,8 +25,6 @@ class Platform(object):
         self.right_trim = 8
         self.obstacle_minimum_dist = 40
 
-        # TEST VALUE
-        #self.inter_wheel_distance = 5.75
         self.inter_wheel_distance = 14.67
 
         self.right_motor = self.motor_hat.getMotor(right_motor_pin)
@@ -37,9 +36,8 @@ class Platform(object):
         self.right_state = Adafruit_MotorHAT.RELEASE
         self.left_state  = Adafruit_MotorHAT.RELEASE
 
-        self.position_tracker= PositionTracker(self.inter_wheel_distance)#-1.40)
-        self.beacon_sensor = BeaconSensor('0c:f3:ee:04:22:3d')
-
+        self.position_tracker= PositionTracker(self.inter_wheel_distance)
+        self.beacon_sensor = BeaconSensor(beacon_ssid)
 
         self.delay = delay
 
@@ -96,7 +94,7 @@ class Platform(object):
         self.beacon_sensor.reset()
 
     def get_forward_distance(self):
-        return ultrasonic_distance(frequency=0.001)
+        return ultrasonic_distance(delay=0.001)
 
     def go_to_point(self, x, y):
         my_x, my_y, my_theta = self.get_state()
@@ -117,52 +115,30 @@ class Platform(object):
 
         sleep(0.3)
 
-        #clearance = self.get_forward_distance()
-        #print "clearance: ",clearance
-        #if to_drive > clearance:
-        #    to_drive = clearance - 15
-
         self.drive_straight(to_drive)
 
     def drive_straight(self, distance_to_travel):
         initial_power = 130
         master_power = initial_power-8  # left encoder
         slave_power  = initial_power+3   # right encoder
-        onetick_power_change = 4
 
         left_distance = 0
         right_distance = 0
 
-        distance_travelled = 0
-
         self.left_encoder.resetTicks()
         self.right_encoder.resetTicks()
-        last_beacon_dist = self.get_beacon_distance(0.01)
+        last_beacon_dist = self.get_beacon_distance(self.delay)
         while ((self.left_encoder.getCurrentDistance() + self.right_encoder.getCurrentDistance()) / 2.0) < distance_to_travel:
-#	    signed_error = (self.left_encoder.getTicks() - self.right_encoder.getTicks()) * onetick_power_change
-             
-	    
-#	    master_power -= signed_error / 2.0
-#	    slave_power += signed_error / 2.0	
-
             self._set_power_directional(LEFT, int(master_power))
             self._set_power_directional(RIGHT, int(slave_power))
-	    
-            print "lpower: %3.0f rpower: %3.0f ldist: %2.0f rdist: %2.0f dst: %3.0fcm?" % (master_power, slave_power, self.left_encoder.getCurrentDistance(), self.right_encoder.getCurrentDistance(), distance_travelled)
-            #distance_travelled += ((self.left_encoder.getCurrentDistance() + self.right_encoder.getCurrentDistance()) / 2.0)
 
-            #left_distance += self.left_encoder.getCurrentDistance()
-            #right_distance += self.right_encoder.getCurrentDistance()
+            #print "lpower: %3.0f rpower: %3.0f ldist: %2.0f rdist: %2.0f dst: %3.0fcm?" % (master_power, slave_power, self.left_encoder.getCurrentDistance(), self.right_encoder.getCurrentDistance(), distance_travelled)
             #print "platform.drive_straight: left=%f, right=%f" % (left_distance,right_distance)
-	    
-
             # Break if we encounter an obstacle
             forward_dist = self.get_forward_distance()
             if forward_dist >=6 and forward_dist <= self.obstacle_minimum_dist:
                 print "Forward distance: %f" % forward_dist
                 break
-
-
 
             # Break if we're moving away from the beacon
             beacon_dist = self.get_beacon_distance(0.01)
@@ -170,13 +146,10 @@ class Platform(object):
                 print "Stopping, beacon dist increased by %f" % (beacon_dist - last_beacon_dist)
                 break
             last_beacon_dist = beacon_dist
-            
 
         left_distance = self.left_encoder.getCurrentDistance()
         right_distance = self.right_encoder.getCurrentDistance()
-        print left_distance, right_distance
         self.position_tracker.update(left_distance, right_distance)
-
         self.shutdown()
 
     def turn(self, radians):
@@ -239,12 +212,12 @@ class Platform(object):
             self._set_power_directional(LEFT, int(left_power))
             self._set_power_directional(RIGHT, int(right_power))
         
-        print "left tick   goal:  %5.2f, right tick   goal:  %5.2f" % (left_tick_goal, right_tick_goal)
-        print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
+        #print "left tick   goal:  %5.2f, right tick   goal:  %5.2f" % (left_tick_goal, right_tick_goal)
+        #print "left actual ticks: %5.2f, right actual ticks: %5.2f" % (self.left_encoder.getTicks(), self.right_encoder.getTicks())
 
         left_distance = self.left_encoder.getCurrentDistance() * sign(radians)
         right_distance = self.right_encoder.getCurrentDistance() * sign(radians) * -1
-        print "platform.turn: updating PositionTracker with left=%3.2fcm, right=%3.2fcm" % (left_distance, right_distance)
+        #print "platform.turn: updating PositionTracker with left=%3.2fcm, right=%3.2fcm" % (left_distance, right_distance)
         self.position_tracker.update(left_distance, right_distance)
 
         self.shutdown()
