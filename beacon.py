@@ -2,6 +2,8 @@
 from bluepy.btle import Scanner, DefaultDelegate
 # noise reduction filter
 from kalman_filter import KalmanFilter
+from numpy import pi as PI
+from math import log
 
 # mathematical constant / Euler's number
 e = 2.718281
@@ -30,11 +32,13 @@ class BeaconSensor(object):
         self.kalman_filter.reset()
     def get_distance(self):
         rssi = self.kalman_filter.estimation()
-        distance = e**( (rssi + 53) / (-2.0 * 10) )
+        print "rssi: %f" % rssi
+        distance = 10**( (rssi + 64.5) / (-2.8 * 10) )
         return distance*100
+        #return distance*100
 
 if __name__ == '__main__':
     sensor = BeaconSensor('0c:f3:ee:04:22:3d')
     while True:
-        sensor.scan(0.01)
+        sensor.scan(0.25)
         print sensor.get_distance()

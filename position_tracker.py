@@ -19,17 +19,17 @@ class PositionTracker(object):
     def update(self, left_distance, right_distance):
         """Returns the (x, y) of the platform given the distances 
            travelled by each wheel."""
-        if left_distance + right_distance == 0:
+        if float(left_distance + right_distance) == 0.0:
             return
 
         # ignore one wheel if the percent difference is low
         #if right_distance == left_distance:
-        print "PositionTracker Input: left_dist=%f right_dist=%f" % (left_distance, right_distance)
+        #print "PositionTracker Input: left_dist=%f right_dist=%f" % (left_distance, right_distance)
 
         total_distance = (left_distance + right_distance) / 2.0
         self.theta -= (right_distance - left_distance) / self.wheel_distance
-        print "right - left = %f" % (right_distance - left_distance)
-        print "right - left / wheel_dist = %f" % ((right_distance - left_distance) / self.wheel_distance)
+        #print "right - left = %f" % (right_distance - left_distance)
+        #print "right - left / wheel_dist = %f" % ((right_distance - left_distance) / self.wheel_distance)
 
         while self.theta > PI:
             self.theta -= (2*PI)
@@ -51,7 +51,7 @@ class PositionTracker(object):
 
         #self.theta -= (rminusl / self.wheel_distance)
 
-        print "PositionTracker Output: at x=%6.2fcm, y=%6.2fcm, theta=%6.2f radians, theta=%6.2f degrees" % (self.x, self.y, self.theta, math.degrees(self.theta))
+        #print "PositionTracker Output: at x=%6.2fcm, y=%6.2fcm, theta=%6.2f radians, theta=%6.2f degrees" % (self.x, self.y, self.theta, math.degrees(self.theta))
 
     def getState(self):
         return (self.x, self.y, self.theta)

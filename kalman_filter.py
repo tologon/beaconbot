@@ -2,7 +2,8 @@
 class KalmanFilter:
     def __init__(self):
         # process variance for VOLTAGE; might be different for RSSI
-        self.Q = 0.008
+        self.Q = 0.00001
+        #self.Q = 0.05
         # estimate of measurement variance, change to see effect
         self.R = 0.1**2
         # initial guesses

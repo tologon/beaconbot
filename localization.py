@@ -4,7 +4,7 @@ from numpy import asarray
 from time import time
 
 class Localizer(object):
-    def __init__(self, samples=16):
+    def __init__(self, samples=25):
         self.samples = samples
         self.worst_sample = ()
         self.state = []
@@ -26,7 +26,7 @@ class Localizer(object):
                             method='SLSQP',
                             jac=error_gradient_func,
                             x0=(15,0),
-                            options={'eps':1.4901e-09,'maxiter':18}
+                            options={'eps':1.4901e-10,'ftol': 1.0,'maxiter':10}
                             )
 
                 if result.fun < best_error:
@@ -57,7 +57,7 @@ class Localizer(object):
             dist = sample[1]
             dist_error = distance.euclidean(test_point, sample_point)
             # TODO: update this approach for division by zero
-            if dist_error * abs(dist - dist_error) < 0.0001:
+            if dist_error * abs(dist - dist_error) < 0.00001:
                 denominator = -1.0
             else:
                 denominator = -1.0 * (dist - dist_error) / (dist_error * abs(dist - dist_error))
@@ -73,7 +73,7 @@ class Localizer(object):
                     method='SLSQP',
                     jac=error_gradient_func,
                     x0=(15,0),
-                    options={'eps':1.4901e-09,'maxiter':12}
+                    options={'eps':1.4901e-16,'ftol': 1.0e-12}#'maxiter':12}
                     )
         return result.x
 
@@ -84,8 +84,8 @@ if __name__ == '__main__':
     import random as rng
     rng.seed(0)
 
-    simulation_length = 1000
-    max_samples = 8
+    simulation_length = 100
+    max_samples = 25
 
     min_range = -500.0
     max_range = 500.0
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     target = (rng.uniform(min_range, max_range), rng.uniform(min_range, max_range))
     points = [(rng.uniform(min_range, max_range),rng.uniform(min_range, max_range)) for x in range(simulation_length)]
 
-    samples = [(p,distance.euclidean(p, target)+rng.uniform(-25.0, 25.0)) for p in points]
+    samples = [(p,distance.euclidean(p, target)+rng.uniform(-50.0, 50.0)) for p in points]
 
     localizer = Localizer(samples=max_samples)
 
